@@ -31,11 +31,15 @@ class Crawler:
             courses = table.find_elements(By.CLASS_NAME, "detail-cell")
             crawled_cnt += len(courses)
             print(crawled_cnt)
-            self.click_next()
+            if crawled_cnt < course_cnt:
+                self.click_next(courses[0])
 
-    def click_next(self):
+    def click_next(self, element):
         next_btn = self.find_element(By.ID, "nextPage")
         next_btn.click()
+        WebDriverWait(self.driver, self.wait_second).until(
+            EC.staleness_of(element)
+        )
 
     def find_element(self, by, value):
         element = WebDriverWait(self.driver, self.wait_second).until(
