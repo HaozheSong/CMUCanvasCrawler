@@ -6,6 +6,7 @@ from selenium.webdriver.chrome.options import Options as ChromeOptions
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from jinja2 import Environment, FileSystemLoader
 from cookie import COOKIE
 
 
@@ -21,6 +22,7 @@ class Crawler:
             self.driver = webdriver.Chrome(service=service)
         self.wait_second = wait_second
         self.wait = WebDriverWait(self.driver, timeout=self.wait_second)
+        self.recordings = []
 
     def close(self):
         self.driver.quit()
@@ -63,6 +65,7 @@ class Crawler:
             [primary_video_link, secondary_video_link] = self.find_videos_in_page(r.page_link)
             r.primary_video_link = primary_video_link
             r.secondary_video_link = secondary_video_link
+        self.recordings = recordings
         return recordings
 
     def click_next(self, element):
@@ -118,6 +121,15 @@ class Crawler:
         # self.driver.switch_to.window(original_window)
         return [primary_video_link, secondary_video_link]
 
+    def render_html(self):
+        env = Environment(
+            loader=FileSystemLoader(searchpath="./")
+        )
+        template = env.get_template("template.html")
+        with open("result.html", "w") as file:
+            rendered_str = template.render(recordings=self.recordings)
+            file.write(rendered_str)
+
 
 class Recording:
     def __init__(self, index, title, page_link, description, primary_video_link="", secondary_video_link=""):
@@ -140,7 +152,8 @@ class Recording:
 crawler = Crawler(headless=True)
 crawler.login_by_cookie(COOKIE)
 recordings = crawler.crawl_recordings("https://canvas.cmu.edu/courses/33119/external_tools/467")
+# crawler.crawl_recordings("https://canvas.cmu.edu/courses/33277/external_tools/467", subfolder="18613")
 for r in recordings:
     print(r)
-# crawler.crawl_recordings("https://canvas.cmu.edu/courses/33277/external_tools/467", subfolder="18613")
+crawler.render_html()
 crawler.close()
