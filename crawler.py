@@ -2,6 +2,7 @@ import re
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service as ChromeService
+from selenium.webdriver.chrome.options import Options as ChromeOptions
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -9,10 +10,15 @@ from cookie import COOKIE
 
 
 class Crawler:
-    def __init__(self, web_driver_path="./web_driver", wait_second=10):
+    def __init__(self, web_driver_path="./web_driver", wait_second=10, headless=False):
         installation = ChromeDriverManager(path=web_driver_path).install()
         service = ChromeService(installation)
-        self.driver = webdriver.Chrome(service=service)
+        if headless:
+            options = ChromeOptions()
+            options.add_argument("--headless=new")
+            self.driver = webdriver.Chrome(service=service, options=options)
+        else:
+            self.driver = webdriver.Chrome(service=service)
         self.wait_second = wait_second
         self.wait = WebDriverWait(self.driver, timeout=self.wait_second)
 
@@ -32,6 +38,7 @@ class Crawler:
             self.click_subfolder_btn(subfolder)
         total = self.parse_page_range()["total"]
         crawled_cnt = 0
+        print(f"Start crawling recording pages 0/{total}")
         while crawled_cnt < total:
             self.parse_page_range()  # wait until the page is fully loaded
             cells_e = self.find_elements(By.CLASS_NAME, "detail-cell")
@@ -47,9 +54,12 @@ class Crawler:
                 crawled_cnt += 1
                 r = Recording(crawled_cnt, r_title, r_link, r_description)
                 recordings.append(r)
+                print(f"Crawling recording pages {crawled_cnt}/{total}")
             if crawled_cnt < total:
                 self.click_next(cells_e[0])
+        print(f"Start crawling primary and secondary video links from recording pages 0/{total}")
         for r in recordings:
+            print(f"Crawling video links {r.index}/{total}")
             [primary_video_link, secondary_video_link] = self.find_videos_in_page(r.page_link)
             r.primary_video_link = primary_video_link
             r.secondary_video_link = secondary_video_link
@@ -127,7 +137,7 @@ class Recording:
         return s
 
 
-crawler = Crawler()
+crawler = Crawler(headless=True)
 crawler.login_by_cookie(COOKIE)
 recordings = crawler.crawl_recordings("https://canvas.cmu.edu/courses/33119/external_tools/467")
 for r in recordings:
