@@ -23,11 +23,13 @@ class Crawler:
         self.driver.get("https://canvas.cmu.edu/404")
         self.driver.add_cookie(cookie)
 
-    def crawl_recordings(self, url):
+    def crawl_recordings(self, url, subfolder=""):
         recordings = []
         driver = self.driver
         driver.get(url)
         self.switch_to_frame("tool_content")
+        if subfolder != "":
+            self.click_subfolder_btn(subfolder)
         total = self.parse_page_range()["total"]
         crawled_cnt = 0
         while crawled_cnt < total:
@@ -56,6 +58,13 @@ class Crawler:
         WebDriverWait(self.driver, self.wait_second).until(
             EC.staleness_of(element)
         )
+
+    def click_subfolder_btn(self, btn_text):
+        buttons = self.find_elements(By.CLASS_NAME, "subfolder-item")
+        for btn in buttons:
+            if btn_text in btn.text:
+                btn.click()
+                return
 
     def find_element(self, by, value):
         element = self.wait.until(EC.presence_of_element_located((by, value)))
@@ -101,5 +110,6 @@ class Recording:
 
 crawler = Crawler()
 crawler.login_by_cookie(COOKIE)
-crawler.crawl_recordings("https://canvas.cmu.edu/courses/33119/external_tools/467")
+# crawler.crawl_recordings("https://canvas.cmu.edu/courses/33119/external_tools/467")
+crawler.crawl_recordings("https://canvas.cmu.edu/courses/33277/external_tools/467", subfolder="18613")
 crawler.close()
