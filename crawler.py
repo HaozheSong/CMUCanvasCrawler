@@ -45,13 +45,14 @@ class Crawler:
                 if r_title == "" and r_link is None and r_description == "":
                     continue
                 crawled_cnt += 1
-                [primary_video_link, secondary_video_link] = self.find_videos_in_page(r_link)
-                self.switch_to_frame("tool_content")
-                r = Recording(crawled_cnt, r_title, r_link, r_description, primary_video_link, secondary_video_link)
+                r = Recording(crawled_cnt, r_title, r_link, r_description)
                 recordings.append(r)
-                print(r)
             if crawled_cnt < total:
                 self.click_next(cells_e[0])
+        for r in recordings:
+            [primary_video_link, secondary_video_link] = self.find_videos_in_page(r.page_link)
+            r.primary_video_link = primary_video_link
+            r.secondary_video_link = secondary_video_link
         return recordings
 
     def click_next(self, element):
@@ -96,20 +97,20 @@ class Crawler:
         return page_range
 
     def find_videos_in_page(self, page_link):
-        original_window = self.driver.current_window_handle
-        self.driver.switch_to.new_window("window")
+        # original_window = self.driver.current_window_handle
+        # self.driver.switch_to.new_window("window")
         self.driver.get(page_link)
         primary_video_e = self.find_element(By.ID, "primaryVideo")
         secondary_video_e = self.find_element(By.ID, "secondaryVideo")
         primary_video_link = primary_video_e.get_attribute("src")
         secondary_video_link = secondary_video_e.get_attribute("src")
-        self.driver.close()
-        self.driver.switch_to.window(original_window)
+        # self.driver.close()
+        # self.driver.switch_to.window(original_window)
         return [primary_video_link, secondary_video_link]
 
 
 class Recording:
-    def __init__(self, index, title, page_link, description, primary_video_link, secondary_video_link):
+    def __init__(self, index, title, page_link, description, primary_video_link="", secondary_video_link=""):
         self.index = index
         self.title = title
         self.page_link = page_link
@@ -128,6 +129,8 @@ class Recording:
 
 crawler = Crawler()
 crawler.login_by_cookie(COOKIE)
-crawler.crawl_recordings("https://canvas.cmu.edu/courses/33119/external_tools/467")
+recordings = crawler.crawl_recordings("https://canvas.cmu.edu/courses/33119/external_tools/467")
+for r in recordings:
+    print(r)
 # crawler.crawl_recordings("https://canvas.cmu.edu/courses/33277/external_tools/467", subfolder="18613")
 crawler.close()
