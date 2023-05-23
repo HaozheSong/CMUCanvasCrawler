@@ -1,5 +1,5 @@
 import re
-from datetime import datetime
+import json
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -10,7 +10,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 from jinja2 import Environment, FileSystemLoader
 
-from cookie import COOKIE
+from recording import Recording
 
 
 class Crawler:
@@ -133,47 +133,16 @@ class Crawler:
             rendered_str = template.render(recordings=self.recordings)
             file.write(rendered_str)
 
+    def save_result(self):
+        with open("result.json", "w") as file:
+            json.dump([r.to_json_dict() for r in self.recordings], file, indent=4)
 
-class Recording:
-    def __init__(self, index, title, page_link, description, primary_video_link="", secondary_video_link=""):
-        self.index = index
-        self.title = title
-        self.page_link = page_link
-        self.description = description
-        self.primary_video_link = primary_video_link
-        self.secondary_video_link = secondary_video_link
-        self.time_datetime = self.parse_time()
-        self.time_str = self.time_datetime.strftime("%Y-%m-%d %H:%M")
-
-    def __str__(self):
-        s = (f"[{self.index}] {self.title}\n"
-             f"{self.time_str}\n"
-             f"{self.description}\n"
-             f"page link: {self.page_link}\n"
-             f"primary video (classroom) link: {self.primary_video_link}\n"
-             f"secondary video (slides) link: {self.secondary_video_link}")
-        return s
-
-    def parse_time(self):
-        pattern = re.compile(r"Meeting Start: (\d+)/(\d+)/(\d+) @ (\d+):(\d+) (AM|PM)")
-        match = pattern.search(self.description)
-        month = int(match.group(1))
-        date = int(match.group(2))
-        year = int(match.group(3))
-        hour_12 = int(match.group(4))
-        minute = int(match.group(5))
-        am_pm = match.group(6)
-        if am_pm == "PM" and hour_12 < 12:
-            hour_24 = int(hour_12) + 12
-        time = datetime(year, month, date, hour_24, minute)
-        return time
-
-
-crawler = Crawler(headless=True)
-crawler.login_by_cookie(COOKIE)
-recordings = crawler.crawl_recordings("https://canvas.cmu.edu/courses/33119/external_tools/467")
-# crawler.crawl_recordings("https://canvas.cmu.edu/courses/33277/external_tools/467", subfolder="18613")
-for r in recordings:
-    print(r)
-crawler.render_html()
-crawler.close()
+    def load_result(self):
+        recordings = []
+        with open("result.json", "r") as file:
+            json_list = json.load(file)
+            for element in json_list:
+                recording = Recording(**element)
+                recordings.append(recording)
+        self.recordings = recordings
+        return recordings
