@@ -1,12 +1,15 @@
 import re
+from datetime import datetime
+
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.chrome.options import Options as ChromeOptions
-from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from webdriver_manager.chrome import ChromeDriverManager
 from jinja2 import Environment, FileSystemLoader
+
 from cookie import COOKIE
 
 
@@ -139,14 +142,31 @@ class Recording:
         self.description = description
         self.primary_video_link = primary_video_link
         self.secondary_video_link = secondary_video_link
+        self.time_datetime = self.parse_time()
+        self.time_str = self.time_datetime.strftime("%Y-%m-%d %H:%M")
 
     def __str__(self):
         s = (f"[{self.index}] {self.title}\n"
+             f"{self.time_str}\n"
              f"{self.description}\n"
              f"page link: {self.page_link}\n"
              f"primary video (classroom) link: {self.primary_video_link}\n"
              f"secondary video (slides) link: {self.secondary_video_link}")
         return s
+
+    def parse_time(self):
+        pattern = re.compile(r"Meeting Start: (\d+)/(\d+)/(\d+) @ (\d+):(\d+) (AM|PM)")
+        match = pattern.search(self.description)
+        month = int(match.group(1))
+        date = int(match.group(2))
+        year = int(match.group(3))
+        hour_12 = int(match.group(4))
+        minute = int(match.group(5))
+        am_pm = match.group(6)
+        if am_pm == "PM" and hour_12 < 12:
+            hour_24 = int(hour_12) + 12
+        time = datetime(year, month, date, hour_24, minute)
+        return time
 
 
 crawler = Crawler(headless=True)
