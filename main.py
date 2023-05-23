@@ -10,4 +10,5 @@ recordings = crawler.load_result()
 for r in recordings:
     print(r)
 crawler.render_html()
+crawler.download(0, 1)
 crawler.close()

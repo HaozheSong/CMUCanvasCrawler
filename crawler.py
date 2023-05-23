@@ -9,6 +9,7 @@ from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 from jinja2 import Environment, FileSystemLoader
+import requests
 
 from recording import Recording
 
@@ -146,3 +147,26 @@ class Crawler:
                 recordings.append(recording)
         self.recordings = recordings
         return recordings
+
+    def download(self, start_index_including, num):
+        # file_name = "{index} {Classroom/Slide} {time} {title} "
+        for i in range(num):
+            index = start_index_including + i
+            recording = self.recordings[index]
+            primary_video_name = f"{index + 1} Classroom {recording.time_str} {recording.title}.mp4"
+            secondary_video_name = f"{index + 1} Slide {recording.time_str} {recording.title}.mp4"
+            download_video(recording.primary_video_link, primary_video_name)
+            download_video(recording.secondary_video_link, secondary_video_name)
+
+
+def download_video(url, filename):
+    downloaded_bytes = 0
+    with requests.get(url, stream=True) as reqeust:
+        size = float(reqeust.headers['content-length'])
+        with open(filename, "wb") as file:
+            for chunk in reqeust.iter_content(chunk_size=8192):
+                downloaded_bytes += len(chunk)
+                print(f"Downloading {round(downloaded_bytes / size * 100, 2)}% "
+                      f"{round(downloaded_bytes / 10 ** 6, 2)}MB/{round(size / 10 ** 6, 2)}/MB "
+                      f"[{filename}]")
+                file.write(chunk)
