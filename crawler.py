@@ -1,5 +1,6 @@
 import re
 import json
+import time
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -80,11 +81,15 @@ class Crawler:
         )
 
     def click_subfolder_btn(self, btn_text):
-        buttons = self.find_elements(By.CLASS_NAME, "subfolder-item")
-        for btn in buttons:
-            if btn_text in btn.text:
-                btn.click()
-                return
+        def text_in_btn(driver):
+            buttons = driver.find_elements(By.CLASS_NAME, "subfolder-item")
+            for btn in buttons:
+                if btn_text in btn.text:
+                    btn.click()
+                    return True
+            return False
+
+        self.wait.until(text_in_btn)
 
     def find_element(self, by, value):
         element = self.wait.until(EC.presence_of_element_located((by, value)))
