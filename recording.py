@@ -12,6 +12,7 @@ class Recording:
         self.secondary_video_link = secondary_video_link
         self.time_datetime = self.parse_time()
         self.time_str = self.time_datetime.strftime("%Y-%m-%d %H:%M")
+        self.time_filename = self.time_datetime.strftime("%Y-%m-%d_%H-%M")
 
     def __str__(self):
         s = (f"[{self.index}] {self.title}\n"

@@ -158,8 +158,8 @@ class Crawler:
         for i in range(num):
             index = start_index_including + i - 1
             recording = self.recordings[index]
-            primary_video_name = f"{index + 1} Classroom {recording.time_str} {recording.title}.mp4"
-            secondary_video_name = f"{index + 1} Slide {recording.time_str} {recording.title}.mp4"
+            primary_video_name = f"{index + 1}_Classroom_{recording.time_filename}.mp4"
+            secondary_video_name = f"{index + 1}_Slide_{recording.time_filename}.mp4"
             download_video(recording.primary_video_link, primary_video_name)
             download_video(recording.secondary_video_link, secondary_video_name)
 
