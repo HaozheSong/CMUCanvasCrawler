@@ -33,6 +33,8 @@ class Recording:
         am_pm = match.group(6)
         if am_pm == "PM" and hour_12 < 12:
             hour_24 = int(hour_12) + 12
+        else:
+            hour_24 = hour_12
         time = datetime(year, month, date, hour_24, minute)
         return time
 
