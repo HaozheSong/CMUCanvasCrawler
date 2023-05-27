@@ -1,6 +1,5 @@
 import re
 import json
-import time
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -36,7 +35,7 @@ class Crawler:
         self.driver.get("https://canvas.cmu.edu/404")
         self.driver.add_cookie(cookie)
 
-    def crawl_recordings(self, url, subfolder=""):
+    def crawl_recordings(self, url, subfolder="", reverse=False):
         recordings = []
         driver = self.driver
         driver.get(url)
@@ -44,9 +43,9 @@ class Crawler:
         if subfolder != "":
             self.click_subfolder_btn(subfolder)
         total = self.parse_page_range()["total"]
-        crawled_cnt = 0
+        page_cnt = 0
         print(f"Start crawling recording pages 0/{total}")
-        while crawled_cnt < total:
+        while page_cnt < total:
             self.parse_page_range()  # wait until the page is fully loaded
             cells_e = self.find_elements(By.CLASS_NAME, "detail-cell")
             for e in cells_e:
@@ -58,12 +57,18 @@ class Crawler:
                 r_title = detail_title_span_e.text
                 if r_title == "" and r_link is None and r_description == "":
                     continue
-                crawled_cnt += 1
-                r = Recording(crawled_cnt, r_title, r_link, r_description)
+                page_cnt += 1
+                if reverse:
+                    index = total + 1 - page_cnt
+                else:
+                    index = page_cnt
+                r = Recording(index, r_title, r_link, r_description)
                 recordings.append(r)
-                print(f"Crawling recording pages {crawled_cnt}/{total}")
-            if crawled_cnt < total:
+                print(f"Crawling recording pages {page_cnt}/{total}")
+            if page_cnt < total:
                 self.click_next(cells_e[0])
+        if reverse:
+            recordings.reverse()
         print(f"Start crawling primary and secondary video links from recording pages 0/{total}")
         for r in recordings:
             print(f"Crawling video links {r.index}/{total}")
@@ -71,6 +76,7 @@ class Crawler:
             r.primary_video_link = primary_video_link
             r.secondary_video_link = secondary_video_link
         self.recordings = recordings
+        print(recordings)
         return recordings
 
     def click_next(self, element):
