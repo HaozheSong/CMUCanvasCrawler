@@ -1,6 +1,11 @@
 .idea
-pyvenv
-web_driver
+.vscode
+
+.DS_Store
+
+venv
+__pycache__
+
 cookie.py
 result.html
 result.json
